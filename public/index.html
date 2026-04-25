@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoardNest - Find Your Perfect Boarding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        h1, h2, h3, .font-heading { font-family: 'Outfit', sans-serif; }
+        
+        body { background-color: #f8fafc; color: #1e293b; }
+
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.75);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at top right, #1e1e2e, #000000);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-gradient::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: #6366f1;
+            filter: blur(150px);
+            opacity: 0.15;
+            animation: pulse-slow 10s infinite alternate;
+        }
+
+        @keyframes pulse-slow {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.2) translate(-50px, 50px); }
+        }
+
+        .card-premium {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .card-premium:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 10000;
+            padding: 16px 24px;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slide-in 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        @keyframes slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .upload-zone {
+            border: 2px dashed #e2e8f0;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: #000;
+            background: #f8fafc;
+        }
+
+        .preview-img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .remove-img {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .facility-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #6366f1;
+        }
+        
+        .admin-tab-btn.active {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: black;
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modern Button Styles */
+        .btn-primary-modern {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 12px 28px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary-modern:hover {
+            background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-outline-modern {
+            background: transparent;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-outline-modern:hover {
+            background: #6366f1;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+        
+        .btn-accent-modern {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 12px 28px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-accent-modern:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-danger-modern {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-danger-modern:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-success-modern {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-success-modern:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-edit-modern {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-edit-modern:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-1px);
+        }
+        
+        .btn-icon-modern {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            color: #64748b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-icon-modern:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+            transform: scale(1.05);
+        }
+        
+        .btn-pill-modern {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            border-radius: 30px;
+            padding: 6px 16px;
+            font-weight: 500;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-pill-modern:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        
+        .btn-glass-modern {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            color: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-glass-modern:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="min-h-screen pb-20">
+        <nav id="navbar" class="glass-nav sticky top-0 z-50 transition-all duration-300"></nav>
+        <main id="page-content" class="min-h-screen"></main>
+    </div>
+
+    <div id="toast-root"></div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[10000] p-6">
+        <div class="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl animate-slide-up">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                <div>
+                    <h3 class="text-2xl font-extrabold text-gray-900">📅 Booking Request</h3>
+                    <p class="text-sm text-gray-500 mt-1">Send a request to the owner and track it from your dashboard.</p>
+                </div>
+                <button onclick="closeBookingModal()" class="btn-icon-modern"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="bookingForm" onsubmit="submitBookingRequest(event)" class="p-6 space-y-6">
+                <input type="hidden" id="bookingBoardingId">
+                <input type="hidden" id="bookingBoardingTitle">
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Selected Property</label>
+                    <p id="bookingPropertyName" class="font-bold text-gray-900 text-lg"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Preferred Move-in Date</label>
+                    <input id="bookingCheckInDate" type="date" required class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-gray-800 font-bold outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Message</label>
+                    <textarea id="bookingMessage" rows="4" placeholder="I would like to book this room from ..." class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-gray-800 font-bold outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-4 pt-2 border-t border-gray-100">
+                    <button type="button" onclick="closeBookingModal()" class="btn-outline-modern">Cancel</button>
+                    <button type="submit" class="btn-primary-modern"><i class="fas fa-paper-plane mr-2"></i>Send Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Property Modal -->
+    <div id="boardingModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-6 overflow-y-auto">
+        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-up">
+            <div class="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 p-6 flex justify-between items-center z-10">
+                <div>
+                    <h3 id="modalTitle" class="text-2xl md:text-3xl font-extrabold tracking-tight text-black">➕ List New Property</h3>
+                    <p class="text-sm text-gray-500 mt-1">Fill in the details to list your boarding property</p>
+                </div>
+                <button onclick="closeModal()" class="btn-icon-modern"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="boardingForm" onsubmit="saveBoarding(event)" class="p-6 md:p-8 space-y-8">
+                <input type="hidden" id="boardingId">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"><i class="fas fa-tag mr-1 text-indigo-500"></i> Property Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="title" required placeholder="e.g., Luxury Apartment near University" class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-4 text-gray-800 font-semibold focus:bg-white focus:border-indigo-500 focus:outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"><i class="fas fa-bed mr-1 text-indigo-500"></i> Room Type</label>
+                        <select id="roomType" class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-4 text-gray-800 font-semibold focus:bg-white focus:border-indigo-500 focus:outline-none">
+                            <option value="Single Room">🛏️ Single Room</option>
+                            <option value="Double Room">🛏️🛏️ Double Room</option>
+                            <option value="Shared (3+)">👥 Shared Room (3+)</option>
+                            <option value="Dormitory">🏘️ Dormitory</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"><i class="fas fa-align-left mr-1 text-indigo-500"></i> Description <span class="text-red-500">*</span></label>
+                    <textarea id="description" required rows="4" placeholder="Describe the property including atmosphere, safety, nearby facilities, rules, and unique features..." class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-4 text-gray-800 font-semibold focus:bg-white focus:border-indigo-500 focus:outline-none resize-none"></textarea>
+                    <p class="text-xs text-gray-400 mt-2">✨ Tip: Include proximity to universities, transport, and amenities</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"><i class="fas fa-map-marker-alt mr-1 text-indigo-500"></i> Location <span class="text-red-500">*</span></label>
+                        <input type="text" id="location" required placeholder="e.g., Colombo 07, Kandy" class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-4 text-gray-800 font-semibold focus:bg-white focus:border-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"><i class="fas fa-currency-sign mr-1 text-indigo-500"></i> Monthly Rent <span class="text-red-500">*</span></label>
+                        <div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">LKR</span><input type="number" id="price" required placeholder="25000" class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-4 pl-14 text-gray-800 font-semibold focus:bg-white focus:border-indigo-500 focus:outline-none"></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"><i class="fas fa-users mr-1 text-indigo-500"></i> Available Rooms</label>
+                        <input type="number" id="availableRooms" placeholder="2" class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-4 text-gray-800 font-semibold focus:bg-white focus:border-indigo-500 focus:outline-none">
+                        <p class="text-xs text-gray-400 mt-1">How many rooms are available?</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-4"><i class="fas fa-couch mr-1 text-indigo-500"></i> Amenities & Facilities</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-indigo-50 p-3 rounded-xl border-2 border-gray-100 transition-all hover:border-indigo-300">
+                            <input type="checkbox" value="Wifi" class="facility-checkbox w-5 h-5"> <span class="text-sm font-semibold text-gray-700">📶 Wi-Fi</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-indigo-50 p-3 rounded-xl border-2 border-gray-100 transition-all hover:border-indigo-300">
+                            <input type="checkbox" value="AC" class="facility-checkbox w-5 h-5"> <span class="text-sm font-semibold text-gray-700">❄️ AC</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-indigo-50 p-3 rounded-xl border-2 border-gray-100 transition-all hover:border-indigo-300">
+                            <input type="checkbox" value="Parking" class="facility-checkbox w-5 h-5"> <span class="text-sm font-semibold text-gray-700">🅿️ Parking</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-indigo-50 p-3 rounded-xl border-2 border-gray-100 transition-all hover:border-indigo-300">
+                            <input type="checkbox" value="Meals" class="facility-checkbox w-5 h-5"> <span class="text-sm font-semibold text-gray-700">🍽️ Meals</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-indigo-50 p-3 rounded-xl border-2 border-gray-100 transition-all hover:border-indigo-300">
+                            <input type="checkbox" value="Laundry" class="facility-checkbox w-5 h-5"> <span class="text-sm font-semibold text-gray-700">🧺 Laundry</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-indigo-50 p-3 rounded-xl border-2 border-gray-100 transition-all hover:border-indigo-300">
+                            <input type="checkbox" value="Security" class="facility-checkbox w-5 h-5"> <span class="text-sm font-semibold text-gray-700">🔒 Security</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-indigo-50 p-3 rounded-xl border-2 border-gray-100 transition-all hover:border-indigo-300">
+                            <input type="checkbox" value="Generator" class="facility-checkbox w-5 h-5"> <span class="text-sm font-semibold text-gray-700">⚡ Generator</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 hover:bg-indigo-50 p-3 rounded-xl border-2 border-gray-100 transition-all hover:border-indigo-300">
+                            <input type="checkbox" value="Hot Water" class="facility-checkbox w-5 h-5"> <span class="text-sm font-semibold text-gray-700">🚿 Hot Water</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-3"><i class="fas fa-image mr-1 text-indigo-500"></i> Property Photos</label>
+                    <div class="upload-zone p-8 flex flex-col items-center justify-center text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-indigo-400 mb-3"></i>
+                        <p class="text-sm font-bold text-gray-600">Click to upload images</p>
+                        <p class="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB each</p>
+                        <p class="text-xs text-indigo-500 mt-2">✨ Add high-quality photos to attract more students</p>
+                    </div>
+                    <input type="file" id="fileInput" multiple accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                    <div id="upload-previews" class="flex flex-wrap gap-4 mt-6"></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"><i class="fab fa-whatsapp mr-1 text-green-500"></i> WhatsApp Number <span class="text-red-500">*</span></label>
+                    <div class="relative"><div class="absolute inset-y-0 left-0 flex items-center pl-4"><span class="text-gray-400 font-semibold">+94</span></div><input type="tel" id="contactNumber" required placeholder="77 123 4567" class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-4 pl-16 text-gray-800 font-semibold focus:bg-white focus:border-indigo-500 focus:outline-none"></div>
+                    <p class="text-xs text-gray-400 mt-2">Students will use this number to contact you via WhatsApp</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t-2 border-gray-100 mt-6">
+                    <button type="button" onclick="closeModal()" class="btn-outline-modern"><i class="fas fa-times mr-2"></i>Cancel</button>
+                    <button type="submit" class="btn-primary-modern"><i class="fas fa-check-circle mr-2"></i>Publish Property Listing</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5005/api';
+        
+        let allReviews = JSON.parse(localStorage.getItem('boardnest_reviews') || '[]');
+        let allBookings = JSON.parse(localStorage.getItem('boardnest_bookings') || '[]');
+        let currentUploads = [];
+
+        function saveReviews() { localStorage.setItem('boardnest_reviews', JSON.stringify(allReviews)); }
+        function saveBookings() { localStorage.setItem('boardnest_bookings', JSON.stringify(allBookings)); }
+
+        function getBookingsForOwner(boardings) {
+            const ownerBoardingIds = boardings.map(b => b._id);
+            return allBookings.filter(booking => ownerBoardingIds.includes(booking.boardingId));
+        }
+
+        // FIXED: updateBookingStatus function
+        function updateBookingStatus(bookingId, status) {
+            console.log('Updating booking:', bookingId, 'to status:', status);
+            console.log('Current bookings:', allBookings);
+            
+            const bookingIndex = allBookings.findIndex(b => b.id == bookingId);
+            if (bookingIndex === -1) {
+                console.error('Booking not found!');
+                return false;
+            }
+            
+            allBookings[bookingIndex].status = status;
+            saveBookings();
+            console.log('Booking updated successfully. New status:', allBookings[bookingIndex].status);
+            return true;
+        }
+
+        function showToast(message, type = 'info') {
+            const toastDiv = document.getElementById('toast-root');
+            const toast = document.createElement('div');
+            toast.className = 'toast-notify';
+            toast.style.background = type === 'error' ? 'linear-gradient(135deg, #f43f5e, #e11d48)' : 'linear-gradient(135deg, #1e293b, #0f172a)';
+            toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'} mr-3"></i>${message}`;
+            toastDiv.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        function getToken() { return localStorage.getItem('token'); }
+        function setToken(token) { localStorage.setItem('token', token); }
+        function getUserRole() { return localStorage.getItem('role'); }
+        function getUserId() { return localStorage.getItem('userId'); }
+        function getUserName() { return localStorage.getItem('userName'); }
+        function setUserData(user) { 
+            if (user && user._id) {
+                localStorage.setItem('userId', user._id); 
+                localStorage.setItem('role', user.role); 
+                localStorage.setItem('userName', user.name);
+            }
+        }
+        function clearUserData() { localStorage.clear(); }
+        function isLoggedIn() { return !!getToken(); }
+
+        async function apiRequest(endpoint, method = 'GET', body = null, authRequired = true) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (authRequired && getToken()) headers['Authorization'] = `Bearer ${getToken()}`;
+            const config = { method, headers };
+            if (body && method !== 'GET') config.body = JSON.stringify(body);
+            try {
+                const res = await fetch(`${API_BASE}${endpoint}`, config);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
+                return data;
+            } catch (error) { 
+                showToast(error.message, 'error');
+                return { boardings: [] };
+            }
+        }
+
+        function escapeHtml(text) { 
+            if (!text) return ''; 
+            const div = document.createElement('div'); 
+            div.textContent = text; 
+            return div.innerHTML; 
+        }
+
+        function contactViaWhatsApp(number, title) {
+            let normalized = number.replace(/\D/g, '');
+            if (normalized.startsWith('0')) normalized = normalized.slice(1);
+            if (!normalized.startsWith('94') && normalized.startsWith('7')) normalized = '94' + normalized;
+            const message = `Hello, I am interested in your listing "${title}".`;
+            window.open(`https://wa.me/${normalized}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        let currentPage = 'home';
+        async function navigateTo(page, params = {}) {
+            currentPage = page;
+            updateNavbar();
+            const contentDiv = document.getElementById('page-content');
+            contentDiv.innerHTML = `<div class="flex justify-center items-center py-40"><div class="w-12 h-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div><p class="text-gray-500 font-medium">Loading...</p></div>`;
+            try {
+                if (page === 'home') await renderHome();
+                else if (page === 'search') await renderSearch(params);
+                else if (page === 'details') await renderBoardingDetails(params.id);
+                else if (page === 'student-dashboard') await renderStudentDashboard();
+                else if (page === 'owner-dashboard') await renderOwnerDashboard();
+                else if (page === 'admin-dashboard') await renderAdminDashboard();
+                else if (page === 'login') renderLogin();
+                else if (page === 'register') renderRegister();
+                else renderNotFound();
+            } catch (err) { 
+                contentDiv.innerHTML = `<div class="text-center py-20 text-red-500">${err.message}</div>`;
+            }
+            window.scrollTo(0,0);
+        }
+
+        function updateNavbar() {
+            const nav = document.getElementById('navbar');
+            const loggedIn = isLoggedIn();
+            const role = getUserRole();
+            const userName = getUserName() || '';
+            
+            let dashboardLink = '';
+            if (loggedIn && role === 'student') dashboardLink = `<a href="#" onclick="navigateTo('student-dashboard')" class="font-semibold text-gray-600 hover:text-black">Dashboard</a>`;
+            if (loggedIn && role === 'owner') dashboardLink = `<a href="#" onclick="navigateTo('owner-dashboard')" class="font-semibold text-gray-600 hover:text-black">Dashboard</a>`;
+            if (loggedIn && role === 'admin') dashboardLink = `<a href="#" onclick="navigateTo('admin-dashboard')" class="font-semibold text-gray-600 hover:text-black">Admin Panel</a>`;
+            
+            nav.innerHTML = `
+                <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+                    <div class="flex items-center space-x-3 cursor-pointer group" onclick="navigateTo('home')">
+                        <div class="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white group-hover:scale-110"><i class="fas fa-house-chimney text-lg"></i></div>
+                        <span class="font-extrabold text-2xl text-black">Board<span class="text-indigo-600">Nest</span></span>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-8">
+                        <a href="#" onclick="navigateTo('home')" class="font-semibold text-gray-600 hover:text-black">Home</a>
+                        <a href="#" onclick="navigateTo('search')" class="font-semibold text-gray-600 hover:text-black">Discover</a>
+                        ${dashboardLink}
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        ${!loggedIn ? `
+                            <button onclick="navigateTo('login')" class="btn-glass-modern">Login</button>
+                            <button onclick="navigateTo('register')" class="btn-primary-modern">Get Started</button>
+                        ` : `
+                            <div class="flex items-center bg-gray-100 pl-2 pr-4 py-1.5 rounded-full border border-gray-200">
+                                <div class="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-xs mr-2 font-bold">${userName.charAt(0).toUpperCase()}</div>
+                                <span class="text-sm font-bold text-gray-800 mr-4">${userName.split(' ')[0]}</span>
+                                <button onclick="logout()" class="text-gray-400 hover:text-red-500 transition-all"><i class="fas fa-sign-out-alt"></i></button>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.logout = function() { clearUserData(); showToast('Logged out successfully'); navigateTo('home'); }
+
+        async function renderHome() {
+            let featured = [];
+            try {
+                const res = await apiRequest('/boardings?limit=6', 'GET', null, false);
+                featured = res.boardings || [];
+            } catch(e) {}
+            
+            const html = `
+                <div class="hero-gradient text-white py-28 relative">
+                    <div class="container mx-auto px-6 relative z-10">
+                        <div class="max-w-3xl">
+                            <span class="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-indigo-300 text-sm font-bold mb-6">Premium Boarding Marketplace</span>
+                            <h1 class="text-6xl md:text-7xl font-extrabold mb-6">Your Home Away <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-rose-400">From Home.</span></h1>
+                            <p class="text-xl text-gray-300 mb-10">Connecting university students with verified boarding houses across Sri Lanka.</p>
+                            <div class="bg-white rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row gap-2 max-w-2xl">
+                                <div class="flex-1 flex items-center px-4"><i class="fas fa-location-dot text-indigo-500 mr-3"></i><input type="text" id="homeSearchInput" placeholder="Enter city, university or area..." class="w-full py-4 text-gray-800 font-semibold outline-none bg-transparent"></div>
+                                <button onclick="homeSearch()" class="btn-primary-modern"><i class="fas fa-search mr-2"></i>Search Now <i class="fas fa-arrow-right ml-2"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="container mx-auto px-6 py-24">
+                    <div class="flex justify-between items-end mb-12">
+                        <div><h2 class="text-4xl font-extrabold text-black">Latest Discoveries</h2><p class="text-gray-500">Verified listings added recently</p></div>
+                        <button onclick="navigateTo('search')" class="btn-outline-modern">Explore All <i class="fas fa-chevron-right ml-2"></i></button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                        ${featured.length ? featured.map(b => boardingCard(b)).join('') : '<p class="col-span-full text-center text-gray-400">No boardings yet.</p>'}
+                    </div>
+                </div>
+                <div class="bg-white py-24 border-y border-gray-100">
+                    <div class="container mx-auto px-6 text-center">
+                        <h2 class="text-4xl font-extrabold mb-8">Search by Campus City</h2>
+                        <div class="flex flex-wrap justify-center gap-4">
+                            ${['Colombo', 'Kandy', 'Galle', 'Jaffna', 'Peradeniya', 'Moratuwa', 'Kelaniya', 'Matara'].map(loc => `<button onclick="navigateTo('search', {location: '${loc}'})" class="btn-pill-modern hover:bg-black hover:text-white transition-all">${loc}</button>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('page-content').innerHTML = html;
+        }
+
+        function boardingCard(b) {
+            return `
+                <div class="card-premium group overflow-hidden cursor-pointer" onclick="navigateTo('details',{id:'${b._id}'})">
+                    <img src="${b.images?.[0] || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800'}" class="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                            <div><h3 class="font-bold text-xl text-gray-900">${escapeHtml(b.title)}</h3><p class="text-gray-500 text-sm mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${escapeHtml(b.location)}</p></div>
+                            <span class="font-bold text-indigo-600">LKR ${b.price.toLocaleString()}<span class="text-xs">/mo</span></span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-3">${b.facilities?.slice(0,3).map(f => `<span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">${f}</span>`).join('')}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.homeSearch = function() { navigateTo('search', { location: document.getElementById('homeSearchInput')?.value }); }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = (e) => { currentUploads.push(e.target.result); renderPreviews(); };
+                reader.readAsDataURL(file);
+            }
+        }
+        function renderPreviews() {
+            const container = document.getElementById('upload-previews');
+            if(container) container.innerHTML = currentUploads.map((src, i) => `<div class="relative"><img src="${src}" class="preview-img border-2 border-gray-200"><div class="remove-img" onclick="removeImage(${i})">×</div></div>`).join('');
+        }
+        window.removeImage = (i) => { currentUploads.splice(i,1); renderPreviews(); };
+
+        async function renderStudentDashboard() {
+            if (!isLoggedIn() || getUserRole() !== 'student') { navigateTo('login'); return; }
+            try {
+                const favorites = await apiRequest('/favorites', 'GET', true);
+                const myBookings = allBookings.filter(b => b.studentId === getUserId());
+                const html = `
+                    <div class="hero-gradient text-white py-24"><div class="container mx-auto px-6"><h1 class="text-4xl md:text-5xl font-extrabold">🎓 Student Dashboard</h1><p class="text-gray-300 mt-2">Welcome back, ${getUserName()}!</p></div></div>
+                    <div class="container mx-auto px-6 py-12">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                            <div class="lg:col-span-2"><h2 class="text-2xl font-extrabold mb-8">❤️ Saved Favorites</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-8">${favorites.favorites?.length ? favorites.favorites.map(b => boardingCard(b)).join('') : '<div class="col-span-full text-center py-20 bg-white rounded-3xl font-bold text-gray-400">No favorites yet</div>'}</div></div>
+                            <div><h2 class="text-2xl font-extrabold mb-8">📅 Booking Status</h2>${myBookings.map(b => `<div class="bg-white p-6 rounded-3xl shadow-xl mb-4"><div class="flex justify-between items-start"><div><p class="font-bold">${escapeHtml(b.boardingTitle)}</p><p class="text-sm text-gray-500">Check-in: ${b.checkInDate}</p></div><span class="px-3 py-1 rounded-full text-xs font-bold ${b.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${b.status}</span></div><p class="text-xs text-gray-500 mt-2">"${b.message || 'No message'}"</p></div>`).join('') || '<div class="bg-white p-8 rounded-3xl text-center text-gray-400">No booking requests yet</div>'}</div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('page-content').innerHTML = html;
+            } catch(e) { showToast(e.message,'error'); }
+        }
+
+        // FIXED: Owner Dashboard with booking status update
+        async function renderOwnerDashboard() {
+            if (!isLoggedIn() || getUserRole() !== 'owner') { navigateTo('login'); return; }
+            try {
+                const boardingsRes = await apiRequest('/boardings/owner', 'GET', true);
+                const boardings = boardingsRes.boardings || [];
+                const bookings = getBookingsForOwner(boardings);
+                
+                console.log('Current bookings:', bookings);
+                
+                const html = `
+                    <div class="bg-black text-white py-24">
+                        <div class="container mx-auto px-6">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h1 class="text-4xl md:text-5xl font-extrabold">🏢 Owner Dashboard</h1>
+                                    <p class="text-gray-300 mt-2">Welcome back, ${getUserName()}!</p>
+                                </div>
+                                <button onclick="showAddBoardingModal()" class="btn-accent-modern">
+                                    <i class="fas fa-plus mr-2"></i>Add New Property
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="container mx-auto px-6 py-12">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                            <!-- Properties Section -->
+                            <div class="lg:col-span-2">
+                                <h2 class="text-2xl font-extrabold mb-8">🏠 Your Properties (${boardings.length})</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    ${boardings.map(b => `
+                                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                                            <img src="${b.images?.[0] || 'https://via.placeholder.com/400'}" class="h-40 w-full object-cover">
+                                            <div class="p-4">
+                                                <h3 class="font-bold text-gray-800">${escapeHtml(b.title)}</h3>
+                                                <p class="text-gray-500 text-sm">${escapeHtml(b.location)}</p>
+                                                <p class="font-bold text-indigo-600 mt-1">LKR ${b.price}/mo</p>
+                                                <div class="flex gap-2 mt-3">
+                                                    <button onclick="editBoarding('${b._id}')" class="btn-edit-modern">
+                                                        <i class="fas fa-edit mr-1"></i>Edit
+                                                    </button>
+                                                    <button onclick="deleteBoarding('${b._id}')" class="btn-danger-modern">
+                                                        <i class="fas fa-trash mr-1"></i>Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('') || '<p class="text-center py-10 text-gray-400 col-span-full">No properties yet</p>'}
+                                </div>
+                            </div>
+                            
+                            <!-- Booking Requests Section -->
+                            <div>
+                                <h2 class="text-2xl font-extrabold mb-8">📩 Booking Requests (${bookings.filter(b => b.status === 'pending').length})</h2>
+                                <div class="space-y-4">
+                                    ${bookings.map(b => `
+                                        <div class="bg-white p-5 rounded-2xl shadow-lg">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <p class="font-bold text-gray-800">${escapeHtml(b.studentName)}</p>
+                                                    <p class="text-sm text-gray-600">🏠 ${escapeHtml(b.boardingTitle)}</p>
+                                                    <p class="text-xs text-gray-400">📅 Check-in: ${b.checkInDate}</p>
+                                                </div>
+                                                <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                                                    b.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 
+                                                    b.status === 'confirmed' ? 'bg-green-100 text-green-700' : 
+                                                    'bg-red-100 text-red-700'
+                                                }">
+                                                    ${b.status === 'pending' ? '⏳ Pending' : 
+                                                      b.status === 'confirmed' ? '✅ Confirmed' : 
+                                                      '❌ Rejected'}
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-2">"${b.message || 'No message'}"</p>
+                                            ${b.status === 'pending' ? `
+                                                <div class="flex gap-2 mt-4">
+                                                    <button onclick="handleBookingStatus('${b.id}', 'confirmed')" class="btn-success-modern flex-1">
+                                                        <i class="fas fa-check mr-1"></i>Confirm
+                                                    </button>
+                                                    <button onclick="handleBookingStatus('${b.id}', 'rejected')" class="btn-danger-modern flex-1">
+                                                        <i class="fas fa-times mr-1"></i>Reject
+                                                    </button>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    `).join('')}
+                                    ${bookings.length === 0 ? '<div class="bg-white p-8 rounded-2xl text-center text-gray-400">No booking requests yet</div>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('page-content').innerHTML = html;
+                
+                // FIXED: handleBookingStatus function
+                window.handleBookingStatus = async function(bookingId, status) {
+                    console.log('Processing booking:', bookingId, status);
+                    
+                    if (!updateBookingStatus(bookingId, status)) {
+                        showToast('Booking could not be updated.', 'error');
+                        return;
+                    }
+                    
+                    showToast(`✅ Booking ${status === 'confirmed' ? 'confirmed' : 'rejected'} successfully!`);
+                    
+                    // Refresh the dashboard
+                    await renderOwnerDashboard();
+                };
+                
+            } catch(e) { 
+                console.error('Owner dashboard error:', e);
+                showToast(e.message, 'error'); 
+            }
+        }
+
+        async function renderAdminDashboard() {
+            if (!isLoggedIn() || getUserRole() !== 'admin') { navigateTo('login'); return; }
+            try {
+                const usersRes = await apiRequest('/users', 'GET', true);
+                const allUsers = usersRes.users || [];
+                const students = allUsers.filter(u => u.role === 'student');
+                const owners = allUsers.filter(u => u.role === 'owner');
+                const boardingsRes = await apiRequest('/boardings', 'GET', null, true);
+                const allBoardings = boardingsRes.boardings || [];
+                
+                const html = `
+                    <div class="bg-black text-white py-16"><div class="container mx-auto px-6"><div class="flex justify-between items-center"><div><h1 class="text-4xl font-extrabold">👑 Admin Dashboard</h1><p class="text-gray-300 mt-2">Manage users, properties, and bookings</p></div><div class="flex gap-3"><span class="bg-indigo-600/20 px-4 py-2 rounded-full text-sm">👥 Users: ${allUsers.length}</span><span class="bg-emerald-600/20 px-4 py-2 rounded-full text-sm">🏠 Properties: ${allBoardings.length}</span></div></div></div></div>
+                    <div class="container mx-auto px-6 py-10">
+                        <div class="flex flex-wrap gap-2 border-b border-gray-200 mb-8">
+                            <button onclick="switchAdminTab('students')" id="tab-students-btn" class="admin-tab-btn px-6 py-3 rounded-t-2xl font-bold text-gray-600 bg-white shadow-sm active">🎓 Students (${students.length})</button>
+                            <button onclick="switchAdminTab('owners')" id="tab-owners-btn" class="admin-tab-btn px-6 py-3 rounded-t-2xl font-bold text-gray-600">🏢 Owners (${owners.length})</button>
+                            <button onclick="switchAdminTab('properties')" id="tab-properties-btn" class="admin-tab-btn px-6 py-3 rounded-t-2xl font-bold text-gray-600">🏠 Properties (${allBoardings.length})</button>
+                            <button onclick="switchAdminTab('bookings')" id="tab-bookings-btn" class="admin-tab-btn px-6 py-3 rounded-t-2xl font-bold text-gray-600">📅 Bookings (${allBookings.length})</button>
+                        </div>
+                        <div id="tab-students" class="admin-tab-content"><div class="bg-white rounded-3xl shadow-xl overflow-hidden"><table class="w-full"><thead class="bg-gray-50"><tr><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Student</th><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Email</th><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Joined</th><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Action</th></tr></thead><tbody>${students.map(s => `<tr class="border-t"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center font-bold">${s.name?.charAt(0)}</div><span class="font-bold">${escapeHtml(s.name)}</span></div></td><td class="px-6 py-4 text-gray-600">${s.email}</td><td class="px-6 py-4 text-gray-400 text-sm">${new Date(s.createdAt).toLocaleDateString()}</td><td class="px-6 py-4"><button onclick="adminDeleteUser('${s._id}')" class="btn-danger-modern"><i class="fas fa-trash mr-1"></i>Delete</button></td></tr>`).join('')}</tbody></table>${students.length === 0 ? '<div class="p-12 text-center text-gray-400">No students registered</div>' : ''}</div></div>
+                        <div id="tab-owners" class="admin-tab-content hidden"><div class="bg-white rounded-3xl shadow-xl overflow-hidden"><table class="w-full"><thead class="bg-gray-50"><tr><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Owner</th><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Email</th><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Listings</th><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Joined</th><th class="px-6 py-4 text-left text-xs font-black text-gray-400">Action</th></tr></thead><tbody>${owners.map(o => `<tr class="border-t"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center font-bold">${o.name?.charAt(0)}</div><span class="font-bold">${escapeHtml(o.name)}</span></div></td><td class="px-6 py-4 text-gray-600">${o.email}</td><td class="px-6 py-4"><span class="bg-emerald-100 px-3 py-1 rounded-full text-xs">${allBoardings.filter(b => b.ownerId === o._id).length} props</span></td><td class="px-6 py-4 text-gray-400 text-sm">${new Date(o.createdAt).toLocaleDateString()}</td><td class="px-6 py-4"><button onclick="adminDeleteUser('${o._id}')" class="btn-danger-modern"><i class="fas fa-trash mr-1"></i>Delete</button></td></tr>`).join('')}</tbody></table>${owners.length === 0 ? '<div class="p-12 text-center text-gray-400">No owners registered</div>' : ''}</div></div>
+                        <div id="tab-properties" class="admin-tab-content hidden"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${allBoardings.map(b => `<div class="bg-white rounded-2xl shadow-lg overflow-hidden"><img src="${b.images?.[0] || 'https://via.placeholder.com/400'}" class="h-40 w-full object-cover"><div class="p-4"><h3 class="font-bold">${escapeHtml(b.title)}</h3><p class="text-gray-500 text-sm">${escapeHtml(b.location)}</p><p class="font-bold text-indigo-600">LKR ${b.price}/mo</p><button onclick="adminDeleteBoarding('${b._id}')" class="btn-danger-modern w-full"><i class="fas fa-trash mr-1"></i>Delete Property</button></div></div>`).join('')}</div>${allBoardings.length === 0 ? '<div class="text-center py-20 text-gray-400">No properties listed</div>' : ''}</div>
+                        <div id="tab-bookings" class="admin-tab-content hidden"><div class="space-y-4">${allBookings.map(b => `<div class="bg-white rounded-2xl shadow-lg p-6"><div class="flex justify-between"><div><div class="flex items-center gap-3"><div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center font-bold text-xs">${b.studentName?.charAt(0)}</div><span class="font-bold">${escapeHtml(b.studentName)}</span></div><p class="text-sm text-gray-600 mt-2">🏠 ${escapeHtml(b.boardingTitle)}</p><p class="text-xs text-gray-400">📅 Check-in: ${b.checkInDate}</p><p class="text-xs text-gray-500 mt-1">"${b.message || 'No message'}"</p></div><div><span class="px-3 py-1 rounded-full text-xs font-bold ${b.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${b.status}</span><p class="text-xs text-gray-400 mt-2">${new Date(b.createdAt).toLocaleDateString()}</p></div></div></div>`).join('')}</div>${allBookings.length === 0 ? '<div class="text-center py-20 text-gray-400">No booking requests</div>' : ''}</div>
+                    </div>
+                `;
+                document.getElementById('page-content').innerHTML = html;
+                switchAdminTab('students');
+            } catch(e) { showToast(e.message,'error'); }
+        }
+
+        function switchAdminTab(tabName) {
+            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('bg-white', 'shadow-sm', 'text-black'));
+            document.getElementById(`tab-${tabName}`)?.classList.remove('hidden');
+            document.getElementById(`tab-${tabName}-btn`)?.classList.add('bg-white', 'shadow-sm', 'text-black');
+        }
+
+        window.adminDeleteUser = async function(userId) {
+            if(confirm('⚠️ Delete user? All their data will be lost!')) {
+                try { await apiRequest(`/users/${userId}`, 'DELETE', null, true); showToast('User deleted'); renderAdminDashboard(); }
+                catch(e) { showToast(e.message, 'error'); }
+            }
+        }
+        window.adminDeleteBoarding = async function(boardingId) {
+            if(confirm('⚠️ Delete this property?')) {
+                try { await apiRequest(`/boardings/${boardingId}`, 'DELETE', null, true); showToast('Property deleted'); renderAdminDashboard(); }
+                catch(e) { showToast(e.message, 'error'); }
+            }
+        }
+
+        async function renderSearch(params = {}) {
+            const html = `<div class="bg-black text-white py-16"><div class="container mx-auto px-6"><h1 class="text-4xl font-extrabold mb-8">Find Your Perfect Boarding</h1><div class="bg-white/10 backdrop-blur-xl rounded-3xl p-6"><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><input type="text" id="filterLocation" placeholder="Location" value="${params.location || ''}" class="bg-white/5 p-4 rounded-xl text-white font-bold outline-none"><input type="number" id="filterMaxPrice" placeholder="Max Price" class="bg-white/5 p-4 rounded-xl text-white font-bold outline-none"><select id="filterFacilities" class="bg-white/5 p-4 rounded-xl text-white font-bold outline-none"><option value="">Any Amenity</option><option value="Wifi">Wifi</option><option value="AC">AC</option><option value="Parking">Parking</option></select><button onclick="applySearchFilters()" class="btn-primary-modern bg-white text-black hover:bg-white">Search</button></div></div></div></div><div class="container mx-auto px-6 py-20"><div id="searchResultsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div></div>`;
+            document.getElementById('page-content').innerHTML = html;
+            await fetchAndDisplayBoardings({ location: params.location || '' });
+        }
+
+        window.applySearchFilters = async function() {
+            await fetchAndDisplayBoardings({ location: document.getElementById('filterLocation')?.value, maxPrice: document.getElementById('filterMaxPrice')?.value, facilities: document.getElementById('filterFacilities')?.value });
+        };
+
+        async function fetchAndDisplayBoardings(filters) {
+            try {
+                let data = await apiRequest('/boardings', 'GET', null, false);
+                let boardings = data.boardings || [];
+                if (filters.location) boardings = boardings.filter(b => b.location.toLowerCase().includes(filters.location.toLowerCase()));
+                if (filters.maxPrice) boardings = boardings.filter(b => b.price <= parseInt(filters.maxPrice));
+                if (filters.facilities) boardings = boardings.filter(b => b.facilities?.includes(filters.facilities));
+                const container = document.getElementById('searchResultsList');
+                if (container) container.innerHTML = boardings.length ? boardings.map(b => boardingCard(b)).join('') : '<div class="col-span-full text-center py-20 text-gray-400">No boardings found</div>';
+            } catch(e) {}
+        }
+
+        async function renderBoardingDetails(id) {
+            try {
+                const b = await apiRequest(`/boardings/${id}`, 'GET', null, false);
+                const html = `
+                    <div class="container mx-auto px-6 py-12 max-w-5xl animate-slide-up">
+                        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                            <img src="${b.images?.[0] || 'https://via.placeholder.com/800x500'}" class="w-full h-96 object-cover">
+                            <div class="p-8">
+                                <div class="flex justify-between items-start"><div><h1 class="text-3xl font-extrabold text-black">${escapeHtml(b.title)}</h1><p class="text-gray-500 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${escapeHtml(b.location)}</p></div><div><p class="text-3xl font-bold text-black">LKR ${b.price}<span class="text-sm text-gray-400">/mo</span></p></div></div>
+                                <div class="flex flex-wrap gap-2 mt-4">${b.facilities?.map(f => `<span class="bg-gray-100 px-3 py-1 rounded-full text-sm">✓ ${f}</span>`).join('')}</div>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 p-4 bg-gray-50 rounded-2xl"><div><p class="text-xs text-gray-400">Room Type</p><p class="font-bold">${b.roomType || 'Standard'}</p></div><div><p class="text-xs text-gray-400">Available</p><p class="font-bold text-green-600">${b.availableRooms || 'Call'}</p></div><div><p class="text-xs text-gray-400">Contact</p><p class="font-bold">${b.contactNumber || 'N/A'}</p></div></div>
+                                <p class="mt-6 text-gray-600 leading-relaxed">${escapeHtml(b.description)}</p>
+                                <div class="mt-8 flex gap-4">${isLoggedIn() && getUserRole() === 'student' ? `<button onclick="showBookingModal('${b._id}', '${escapeHtml(b.title)}')" class="btn-primary-modern flex-1"><i class="fas fa-calendar-check mr-2"></i>Book Now</button><button onclick="contactViaWhatsApp('${b.contactNumber}', '${escapeHtml(b.title)}')" class="btn-success-modern flex-1"><i class="fab fa-whatsapp mr-2"></i>WhatsApp</button>` : `<button onclick="navigateTo('login')" class="btn-primary-modern flex-1">Login to Book</button>`}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('page-content').innerHTML = html;
+            } catch(e) { showToast('Failed to load details', 'error'); }
+        }
+
+        window.showBookingModal = function(boardingId, title) {
+            if (!isLoggedIn() || getUserRole() !== 'student') { navigateTo('login'); return; }
+            document.getElementById('bookingBoardingId').value = boardingId;
+            document.getElementById('bookingBoardingTitle').value = title;
+            document.getElementById('bookingPropertyName').textContent = title;
+            document.getElementById('bookingCheckInDate').value = '';
+            document.getElementById('bookingMessage').value = `Hello, I'm interested in booking "${title}". Please let me know if it's available.`;
+            document.getElementById('bookingModal').classList.remove('hidden');
+        };
+        window.closeBookingModal = function() { document.getElementById('bookingModal').classList.add('hidden'); };
+        window.submitBookingRequest = function(e) {
+            e.preventDefault();
+            allBookings.push({ id: Date.now(), boardingId: document.getElementById('bookingBoardingId').value, boardingTitle: document.getElementById('bookingBoardingTitle').value, studentId: getUserId(), studentName: getUserName(), checkInDate: document.getElementById('bookingCheckInDate').value, message: document.getElementById('bookingMessage').value, status: 'pending', createdAt: new Date().toISOString() });
+            saveBookings();
+            closeBookingModal();
+            showToast('✅ Booking request sent!');
+            navigateTo('student-dashboard');
+        };
+
+        window.showAddBoardingModal = function(boarding = null) {
+            currentUploads = boarding?.images || [];
+            renderPreviews();
+            document.getElementById('modalTitle').textContent = boarding ? '✏️ Update Property' : '➕ List New Property';
+            document.getElementById('boardingId').value = boarding?._id || '';
+            document.getElementById('title').value = boarding?.title || '';
+            document.getElementById('description').value = boarding?.description || '';
+            document.getElementById('location').value = boarding?.location || '';
+            document.getElementById('price').value = boarding?.price || '';
+            document.getElementById('contactNumber').value = boarding?.contactNumber || '';
+            document.getElementById('roomType').value = boarding?.roomType || 'Single Room';
+            document.getElementById('availableRooms').value = boarding?.availableRooms || '';
+            document.querySelectorAll('.facility-checkbox').forEach(cb => cb.checked = boarding?.facilities?.includes(cb.value) || false);
+            document.getElementById('boardingModal').classList.remove('hidden');
+        };
+        window.closeModal = function() { document.getElementById('boardingModal').classList.add('hidden'); };
+        window.saveBoarding = async function(e) {
+            e.preventDefault();
+            const facilities = [...document.querySelectorAll('.facility-checkbox:checked')].map(cb => cb.value);
+            const data = { title: document.getElementById('title').value, description: document.getElementById('description').value, location: document.getElementById('location').value, price: parseInt(document.getElementById('price').value), facilities, images: currentUploads, contactNumber: document.getElementById('contactNumber').value, roomType: document.getElementById('roomType').value, availableRooms: parseInt(document.getElementById('availableRooms').value) || 0 };
+            try {
+                const id = document.getElementById('boardingId').value;
+                if (id) await apiRequest(`/boardings/${id}`, 'PUT', data, true);
+                else await apiRequest('/boardings', 'POST', data, true);
+                showToast(id ? '✏️ Property updated!' : '🎉 Property published!');
+                closeModal();
+                renderOwnerDashboard();
+            } catch(e) { showToast(e.message, 'error'); }
+        };
+        window.editBoarding = async function(id) { try { const b = await apiRequest(`/boardings/${id}`, 'GET'); showAddBoardingModal(b); } catch(e) { showToast(e.message, 'error'); } };
+        window.deleteBoarding = async function(id) { if(confirm('⚠️ Delete property?')) { try { await apiRequest(`/boardings/${id}`, 'DELETE', null, true); showToast('🗑️ Property deleted'); renderOwnerDashboard(); } catch(e) { showToast(e.message, 'error'); } } };
+
+        function renderLogin() { document.getElementById('page-content').innerHTML = authForm('login'); }
+        function renderRegister() { document.getElementById('page-content').innerHTML = authForm('register'); }
+        function authForm(type) { return `<div class="min-h-[80vh] flex items-center justify-center bg-gray-50 p-6"><div class="bg-white p-12 rounded-3xl shadow-2xl max-w-md w-full animate-slide-up"><div class="text-center"><div class="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white text-2xl mx-auto mb-6"><i class="fas ${type === 'login' ? 'fa-lock' : 'fa-user-plus'}"></i></div><h2 class="text-3xl font-extrabold">${type === 'login' ? 'Welcome Back' : 'Join BoardNest'}</h2></div><form id="authForm" class="mt-8 space-y-4">${type === 'register' ? '<input type="text" id="name" placeholder="Full Name" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-bold outline-none">' : ''}<input type="email" id="email" placeholder="Email" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-bold outline-none"><input type="password" id="password" placeholder="Password" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-bold outline-none">${type === 'register' ? '<select id="role" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-bold outline-none"><option value="student">🎓 Student</option><option value="owner">🏢 Property Owner</option></select>' : ''}<button type="submit" class="btn-primary-modern w-full">${type === 'login' ? 'Sign In' : 'Register'}</button></form><p class="text-center mt-8 text-gray-500">${type === 'login' ? "Don't have an account? " : "Already have an account? "}<button onclick="navigateTo('${type === 'login' ? 'register' : 'login'}')" class="text-indigo-600 font-bold underline">${type === 'login' ? 'Register' : 'Sign In'}</button></p></div></div>`; }
+        
+        document.addEventListener('submit', async function(e) {
+            if(e.target.id === 'authForm') {
+                e.preventDefault();
+                const isLogin = currentPage === 'login';
+                const payload = isLogin ? { email: document.getElementById('email').value, password: document.getElementById('password').value } : { name: document.getElementById('name').value, email: document.getElementById('email').value, password: document.getElementById('password').value, role: document.getElementById('role').value };
+                try { const data = await apiRequest(isLogin ? '/auth/login' : '/auth/register', 'POST', payload, false); if (data && data.token) { setToken(data.token); setUserData(data); showToast(`Welcome ${data.name}!`); navigateTo(data.role === 'owner' ? 'owner-dashboard' : data.role === 'admin' ? 'admin-dashboard' : 'home'); } } catch(err) { showToast(err.message, 'error'); }
+            }
+        });
+        
+        function renderNotFound() { document.getElementById('page-content').innerHTML = '<div class="text-center py-40 text-4xl font-bold text-gray-300">404 - Page Not Found</div>'; }
+        navigateTo('home');
+    </script>
+</body>
+</html>

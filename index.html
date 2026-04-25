@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoardNest - Find Your Perfect Boarding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+        .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.15); }
+        .toast-notify { position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: #1f2937; color: white; padding: 12px 20px; border-radius: 40px; font-size: 0.9rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <div id="app" class="min-h-screen flex flex-col">
+        <nav id="navbar" class="bg-white shadow-md sticky top-0 z-50"></nav>
+        <main id="page-content" class="flex-grow container mx-auto px-4 py-6"></main>
+        <footer class="bg-gray-800 text-white py-6 text-center text-sm">
+            <p>&copy; 2025 BoardNest – Find your home near campus, Sri Lanka.</p>
+        </footer>
+    </div>
+
+    <div id="toast-root"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5001/api';
+        
+        function showToast(message, type = 'info') {
+            const toastDiv = document.getElementById('toast-root');
+            const toast = document.createElement('div');
+            toast.className = 'toast-notify';
+            toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} mr-2"></i>${message}`;
+            toast.style.backgroundColor = type === 'error' ? '#b91c1c' : '#2c7a4d';
+            toastDiv.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        function getToken() { return localStorage.getItem('token'); }
+        function setToken(token) { localStorage.setItem('token', token); }
+        function removeToken() { localStorage.removeItem('token'); }
+        function getUserRole() { return localStorage.getItem('role'); }
+        function setUserData(user) { localStorage.setItem('userId', user._id); localStorage.setItem('role', user.role); localStorage.setItem('userName', user.name); }
+        function clearUserData() { localStorage.removeItem('userId'); localStorage.removeItem('role'); localStorage.removeItem('userName'); removeToken(); }
+        function isLoggedIn() { return !!getToken(); }
+
+        async function apiRequest(endpoint, method = 'GET', body = null, authRequired = true) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (authRequired && getToken()) {
+                headers['Authorization'] = `Bearer ${getToken()}`;
+            }
+            const config = { method, headers };
+            if (body) config.body = JSON.stringify(body);
+            try {
+                const res = await fetch(`${API_BASE}${endpoint}`, config);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Request failed');
+                return data;
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        let currentPage = 'home';
+
+        async function navigateTo(page, params = {}) {
+            currentPage = page;
+            updateNavbar();
+            const contentDiv = document.getElementById('page-content');
+            contentDiv.innerHTML = '<div class="flex justify-center items-center py-20"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i></div>';
+            try {
+                if (page === 'home') await renderHome();
+                else if (page === 'search') await renderSearch(params);
+                else if (page === 'details') await renderBoardingDetails(params.id);
+                else if (page === 'student-dashboard') await renderStudentDashboard();
+                else if (page === 'owner-dashboard') await renderOwnerDashboard();
+                else if (page === 'login') renderLogin();
+                else if (page === 'register') renderRegister();
+                else renderNotFound();
+            } catch (err) {
+                contentDiv.innerHTML = `<div class="bg-red-100 p-4 rounded text-red-700">Error: ${err.message}</div>`;
+            }
+            window.scrollTo(0,0);
+        }
+
+        function updateNavbar() {
+            const nav = document.getElementById('navbar');
+            const role = getUserRole();
+            const loggedIn = isLoggedIn();
+            nav.innerHTML = `
+                <div class="container mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+                    <div class="flex items-center space-x-2 cursor-pointer" onclick="navigateTo('home')">
+                        <i class="fas fa-home text-indigo-600 text-2xl"></i>
+                        <span class="font-bold text-xl text-gray-800">BoardNest</span>
+                    </div>
+                    <div class="flex space-x-5 items-center">
+                        <button onclick="navigateTo('search')" class="hover:text-indigo-600 transition"><i class="fas fa-search"></i> Search</button>
+                        ${loggedIn ? (role === 'owner' ? `<button onclick="navigateTo('owner-dashboard')" class="hover:text-indigo-600"><i class="fas fa-building"></i> Dashboard</button>` :
+                                          `<button onclick="navigateTo('student-dashboard')" class="hover:text-indigo-600"><i class="fas fa-user-graduate"></i> Dashboard</button>`) : ''}
+                        ${!loggedIn ? `<button onclick="navigateTo('login')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Login</button>
+                                      <button onclick="navigateTo('register')" class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-50">Register</button>` :
+                                      `<div class="flex items-center space-x-2"><span class="text-gray-600"><i class="fas fa-user-circle"></i> ${localStorage.getItem('userName') || ''}</span><button onclick="logout()" class="text-red-500 hover:text-red-700"><i class="fas fa-sign-out-alt"></i> Logout</button></div>`}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.logout = function() { clearUserData(); showToast('Logged out'); navigateTo('home'); }
+
+        async function renderHome() {
+            let featuredBoardings = [];
+            try {
+                const res = await apiRequest('/boardings?limit=6', 'GET', null, false);
+                featuredBoardings = res.boardings || [];
+            } catch(e) { featuredBoardings = []; }
+            const html = `
+                <div class="fade-in">
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-8 text-white text-center mb-10">
+                        <h1 class="text-4xl font-bold mb-2">Find Your Perfect Boarding Near Campus</h1>
+                        <p class="text-lg opacity-90">Sri Lanka's trusted platform for students</p>
+                        <div class="mt-6 max-w-2xl mx-auto flex gap-2 bg-white p-2 rounded-full shadow-lg">
+                            <input type="text" id="homeSearchInput" placeholder="Search by city, location..." class="flex-grow p-3 rounded-full text-gray-700 outline-none">
+                            <button onclick="homeSearch()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-6 rounded-full"><i class="fas fa-search"></i> Search</button>
+                        </div>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-5">🏠 Featured Boardings</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${featuredBoardings.length ? featuredBoardings.map(b => boardingCard(b)).join('') : '<p class="col-span-full text-center text-gray-500">No boardings yet.</p>'}
+                    </div>
+                    <h2 class="text-2xl font-bold mt-12 mb-5">📍 Popular Locations</h2>
+                    <div class="flex flex-wrap gap-4 justify-center">
+                        <button onclick="searchByLocation('Colombo')" class="bg-gray-200 hover:bg-indigo-100 px-5 py-2 rounded-full">Colombo</button>
+                        <button onclick="searchByLocation('Kandy')" class="bg-gray-200 hover:bg-indigo-100 px-5 py-2 rounded-full">Kandy</button>
+                        <button onclick="searchByLocation('Galle')" class="bg-gray-200 hover:bg-indigo-100 px-5 py-2 rounded-full">Galle</button>
+                        <button onclick="searchByLocation('Jaffna')" class="bg-gray-200 hover:bg-indigo-100 px-5 py-2 rounded-full">Jaffna</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('page-content').innerHTML = html;
+        }
+
+        window.homeSearch = function() { const query = document.getElementById('homeSearchInput')?.value; navigateTo('search', { location: query }); }
+        window.searchByLocation = function(loc) { navigateTo('search', { location: loc }); }
+
+        async function renderSearch(params = {}) {
+            const html = `
+                <div class="bg-white p-5 rounded-xl shadow-md mb-8">
+                    <h3 class="font-semibold text-lg mb-3">🔍 Filter Boardings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="text" id="filterLocation" placeholder="Location" value="${params.location || ''}" class="border rounded-lg p-2">
+                        <input type="number" id="filterMinPrice" placeholder="Min price" class="border rounded-lg p-2">
+                        <input type="number" id="filterMaxPrice" placeholder="Max price" class="border rounded-lg p-2">
+                        <select id="filterFacilities" class="border rounded-lg p-2"><option value="">Any facility</option><option value="Wifi">Wifi</option><option value="Parking">Parking</option><option value="Meals">Meals</option><option value="AC">AC</option></select>
+                    </div>
+                    <button onclick="applySearchFilters()" class="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg">Apply Filters</button>
+                </div>
+                <div id="searchResultsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            `;
+            document.getElementById('page-content').innerHTML = html;
+            await fetchAndDisplayBoardings({ location: params.location || '' });
+        }
+
+        window.applySearchFilters = async function() {
+            const location = document.getElementById('filterLocation').value;
+            const minPrice = document.getElementById('filterMinPrice').value;
+            const maxPrice = document.getElementById('filterMaxPrice').value;
+            const facilities = document.getElementById('filterFacilities').value;
+            await fetchAndDisplayBoardings({ location, minPrice, maxPrice, facilities });
+        }
+
+        async function fetchAndDisplayBoardings(filters) {
+            const queryParams = new URLSearchParams();
+            if (filters.location) queryParams.append('location', filters.location);
+            if (filters.minPrice) queryParams.append('minPrice', filters.minPrice);
+            if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice);
+            if (filters.facilities) queryParams.append('facilities', filters.facilities);
+            try {
+                const data = await apiRequest(`/boardings?${queryParams.toString()}`, 'GET', null, false);
+                const boardings = data.boardings || [];
+                const container = document.getElementById('searchResultsList');
+                if (boardings.length === 0) container.innerHTML = '<div class="col-span-full text-center p-10 bg-gray-100 rounded">No boardings match.</div>';
+                else container.innerHTML = boardings.map(b => boardingCard(b)).join('');
+            } catch(err) { showToast(err.message, 'error'); }
+        }
+
+        async function renderBoardingDetails(id) {
+            try {
+                const boarding = await apiRequest(`/boardings/${id}`, 'GET', null, false);
+                const isOwner = (isLoggedIn() && getUserRole() === 'owner' && boarding.ownerId === localStorage.getItem('userId'));
+                const html = `
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden fade-in">
+                        <img src="${boarding.images?.[0] || 'https://via.placeholder.com/800x400?text=Boarding+Image'}" class="w-full h-64 object-cover">
+                        <div class="p-6">
+                            <h1 class="text-3xl font-bold">${boarding.title}</h1>
+                            <p class="text-gray-600 mt-1"><i class="fas fa-map-marker-alt"></i> ${boarding.location}</p>
+                            <p class="text-2xl font-bold text-indigo-700 mt-2">LKR ${boarding.price}/month</p>
+                            <div class="flex flex-wrap gap-2 mt-3">${boarding.facilities.map(f => `<span class="bg-gray-100 px-3 py-1 rounded-full text-sm">${f}</span>`).join('')}</div>
+                            <p class="mt-4 text-gray-700">${boarding.description}</p>
+                            <div class="mt-6 flex gap-4">
+                                ${!isOwner && isLoggedIn() ? `<button onclick="contactOwner('${boarding.ownerId}', '${boarding.title}')" class="bg-green-600 text-white px-5 py-2 rounded-lg"><i class="fas fa-envelope"></i> Contact Owner</button>` : ''}
+                                ${isLoggedIn() && getUserRole() === 'student' ? `<button onclick="toggleFavorite('${boarding._id}')" class="bg-yellow-500 text-white px-5 py-2 rounded-lg"><i class="fas fa-heart"></i> Save to Favorites</button>` : ''}
+                                ${isOwner ? `<button onclick="navigateTo('owner-dashboard')" class="bg-indigo-600 text-white px-5 py-2 rounded-lg">Edit Boarding</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('page-content').innerHTML = html;
+            } catch(err) { showToast('Failed to load', 'error'); }
+        }
+
+        window.contactOwner = async function(ownerId, title) {
+            try { await apiRequest('/contacts', 'POST', { ownerId, boardingTitle: title, message: `I'm interested in "${title}".` }, true); showToast('Message sent!'); } 
+            catch(e) { showToast(e.message, 'error'); }
+        };
+
+        window.toggleFavorite = async function(boardingId) {
+            try { await apiRequest('/favorites', 'POST', { boardingId }, true); showToast('Added to favorites'); } 
+            catch(e) { showToast(e.message, 'error'); }
+        };
+
+        async function renderStudentDashboard() {
+            if (!isLoggedIn() || getUserRole() !== 'student') { navigateTo('login'); return; }
+            try {
+                const favorites = await apiRequest('/favorites', 'GET', true);
+                const contacts = await apiRequest('/contacts/student', 'GET', true);
+                const html = `
+                    <h2 class="text-2xl font-bold mb-4">📚 Student Dashboard</h2>
+                    <div class="mb-8"><h3 class="text-xl font-semibold">❤️ Saved Favorites</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">${favorites.favorites?.length ? favorites.favorites.map(b => boardingCard(b)).join('') : '<p>No favorites yet.</p>'}</div></div>
+                    <div><h3 class="text-xl font-semibold">✉️ Contacted Owners</h3><div class="bg-white p-4 rounded shadow">${contacts.contacts?.map(c => `<div class="border-b py-2"><p><strong>${c.boardingTitle}</strong> - ${c.message}</p><span class="text-xs text-gray-400">${new Date(c.createdAt).toLocaleString()}</span></div>`).join('') || '<p>No messages sent.</p>'}</div></div>
+                `;
+                document.getElementById('page-content').innerHTML = html;
+            } catch(e) { showToast(e.message,'error'); }
+        }
+
+        async function renderOwnerDashboard() {
+            if (!isLoggedIn() || getUserRole() !== 'owner') { navigateTo('login'); return; }
+            try {
+                const boardingsRes = await apiRequest('/boardings/owner', 'GET', true);
+                const boardings = boardingsRes.boardings || [];
+                const contactsRes = await apiRequest('/contacts/owner', 'GET', true);
+                const html = `
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">🏢 Owner Dashboard</h2>
+                        <button onclick="showAddBoardingModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"><i class="fas fa-plus"></i> Add Boarding</button>
+                    </div>
+                    <div id="boardingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div class="bg-white rounded-xl p-6 w-full max-w-lg">
+                            <h3 id="modalTitle" class="text-xl font-bold mb-4">Add Boarding</h3>
+                            <form id="boardingForm" onsubmit="saveBoarding(event)">
+                                <input type="hidden" id="boardingId">
+                                <div class="mb-3"><label>Title *</label><input type="text" id="title" required class="w-full border rounded-lg p-2"></div>
+                                <div class="mb-3"><label>Description *</label><textarea id="description" required rows="3" class="w-full border rounded-lg p-2"></textarea></div>
+                                <div class="mb-3"><label>Location *</label><input type="text" id="location" required class="w-full border rounded-lg p-2"></div>
+                                <div class="mb-3"><label>Price (LKR) *</label><input type="number" id="price" required class="w-full border rounded-lg p-2"></div>
+                                <div class="mb-3"><label>Facilities (comma separated)</label><input type="text" id="facilities" class="w-full border rounded-lg p-2"></div>
+                                <div class="mb-3"><label>Image URLs (comma separated)</label><input type="text" id="images" class="w-full border rounded-lg p-2"></div>
+                                <div class="flex gap-3"><button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">Save</button><button type="button" onclick="closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg">Cancel</button></div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                        ${boardings.length ? boardings.map(b => ownerCard(b)).join('') : '<p class="text-gray-500">No boardings yet.</p>'}
+                    </div>
+                    <div class="mt-8"><h3 class="text-xl font-semibold">Messages</h3>${contactsRes.contacts?.length ? contactsRes.contacts.map(c => `<div class="bg-white p-3 rounded shadow mt-2"><strong>${c.studentName}</strong> about ${c.boardingTitle}: ${c.message}</div>`).join('') : '<p>No messages.</p>'}</div>
+                `;
+                document.getElementById('page-content').innerHTML = html;
+            } catch(e) { showToast(e.message,'error'); }
+        }
+
+        window.showAddBoardingModal = function(boarding = null) {
+            const modal = document.getElementById('boardingModal');
+            document.getElementById('modalTitle').textContent = boarding ? 'Edit Boarding' : 'Add Boarding';
+            document.getElementById('boardingId').value = boarding?._id || '';
+            document.getElementById('title').value = boarding?.title || '';
+            document.getElementById('description').value = boarding?.description || '';
+            document.getElementById('location').value = boarding?.location || '';
+            document.getElementById('price').value = boarding?.price || '';
+            document.getElementById('facilities').value = boarding?.facilities?.join(', ') || '';
+            document.getElementById('images').value = boarding?.images?.join(', ') || '';
+            modal.classList.remove('hidden');
+        };
+
+        window.closeModal = function() { document.getElementById('boardingModal').classList.add('hidden'); };
+
+        window.saveBoarding = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('boardingId').value;
+            const data = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                location: document.getElementById('location').value,
+                price: parseInt(document.getElementById('price').value),
+                facilities: document.getElementById('facilities').value.split(',').map(s=>s.trim()).filter(s=>s),
+                images: document.getElementById('images').value.split(',').map(s=>s.trim()).filter(s=>s)
+            };
+            try {
+                if(id) await apiRequest(`/boardings/${id}`, 'PUT', data, true);
+                else await apiRequest('/boardings', 'POST', data, true);
+                showToast(id ? 'Updated' : 'Added');
+                closeModal();
+                renderOwnerDashboard();
+            } catch(e) { showToast(e.message, 'error'); }
+        };
+
+        window.editBoarding = async function(id) {
+            try { const b = await apiRequest(`/boardings/${id}`, 'GET'); showAddBoardingModal(b); } 
+            catch(e) { showToast(e.message, 'error'); }
+        };
+
+        window.deleteBoarding = async function(id) {
+            if(confirm('Delete?')) { try { await apiRequest(`/boardings/${id}`, 'DELETE', null, true); showToast('Deleted'); renderOwnerDashboard(); } catch(e) { showToast(e.message, 'error'); } }
+        };
+
+        function ownerCard(b) {
+            return `<div class="bg-white rounded-xl shadow p-4"><h3 class="font-bold">${b.title}</h3><p>${b.location} | LKR ${b.price}</p><div class="flex gap-2 mt-2"><button onclick="editBoarding('${b._id}')" class="text-blue-500"><i class="fas fa-edit"></i> Edit</button><button onclick="deleteBoarding('${b._id}')" class="text-red-500"><i class="fas fa-trash"></i> Delete</button></div></div>`;
+        }
+
+        function boardingCard(b) {
+            return `<div class="bg-white rounded-xl shadow-md overflow-hidden card-hover cursor-pointer" onclick="navigateTo('details',{id:'${b._id}'})"><img src="${b.images?.[0] || 'https://via.placeholder.com/400x200'}" class="h-48 w-full object-cover"><div class="p-4"><h3 class="font-bold text-lg">${b.title}</h3><p class="text-gray-600"><i class="fas fa-location-dot"></i> ${b.location}</p><p class="font-semibold text-indigo-700">LKR ${b.price}/month</p></div></div>`;
+        }
+
+        function renderLogin() { document.getElementById('page-content').innerHTML = authForm('login'); }
+        function renderRegister() { document.getElementById('page-content').innerHTML = authForm('register'); }
+        function authForm(type) {
+            return `<div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-md"><h2 class="text-2xl font-bold mb-4">${type === 'login' ? 'Sign In' : 'Register'}</h2><form id="authForm"><input type="text" id="name" placeholder="Full Name" class="w-full border p-3 rounded-lg mb-3 ${type === 'login' ? 'hidden' : ''}"><input type="email" id="email" placeholder="Email" class="w-full border p-3 rounded-lg mb-3"><input type="password" id="password" placeholder="Password" class="w-full border p-3 rounded-lg mb-3"><select id="role" class="w-full border p-3 rounded-lg mb-4"><option value="student">Student</option><option value="owner">Owner</option></select><button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-lg">${type === 'login' ? 'Login' : 'Register'}</button></form><p class="mt-4 text-center">${type === 'login' ? "Don't have account? " : "Already have account? "}<button onclick="navigateTo('${type === 'login' ? 'register' : 'login'}')" class="text-indigo-600">${type === 'login' ? 'Register' : 'Login'}</button></p></div>`;
+        }
+
+        document.addEventListener('submit', async function(e) {
+            if(e.target.id === 'authForm') {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const role = document.getElementById('role')?.value;
+                const name = document.getElementById('name')?.value;
+                const isLogin = currentPage === 'login';
+                try {
+                    let endpoint = isLogin ? '/auth/login' : '/auth/register';
+                    let payload = isLogin ? { email, password } : { name, email, password, role };
+                    const data = await apiRequest(endpoint, 'POST', payload, false);
+                    setToken(data.token);
+                    setUserData(data.user);
+                    showToast(`Welcome ${data.user.name}!`);
+                    navigateTo(data.user.role === 'owner' ? 'owner-dashboard' : 'home');
+                } catch(err) { showToast(err.message, 'error'); }
+            }
+        });
+
+        function renderNotFound() { document.getElementById('page-content').innerHTML = '<div class="text-center">404</div>'; }
+        navigateTo('home');
+    </script>
+</body>
+</html>
